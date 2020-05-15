@@ -1,4 +1,9 @@
 const whiteList = require('whitelist')
+const createTransportList = require('transportlist')
+const produce = require('factory')
+const runLab = require('lab')
+const runTerminal = require('terminal')
+const roomManager = require('roommanager')
 const highwayRoom = {
     W29N4:['W30N3','W30N4','W30N5','W30N6','W30N7','W30N8'],
 }
@@ -7,9 +12,27 @@ module.exports = function () {
 }
 
 const roomExtension = {
-    // 生成各种任务队列
     work: function(){
-
+        const startCpu = Game.cpu.getUsed()
+        if(!this.memory) this.memory={}
+        createTransportList(this)
+        produce(this)
+        runLab(this)
+        runTerminal(this)
+        this.power()
+        if(Game.time%3===0){
+            this.linkTrans()
+        }
+        else if(Game.time%5===0){
+            this.findEnemy()
+            this.findRepairTarget()
+        }
+        else if(Game.time%20===0){
+            this.findNuke()
+            this.observe()
+        }
+        const elapsed = Game.cpu.getUsed() - startCpu
+        this.memory.CPUused=elapsed
     },
 
     /**
@@ -20,6 +43,7 @@ const roomExtension = {
     findEnemy: function(){
         // 主房设置战争状态
         if(this.controller.my){
+            const startCpu = Game.cpu.getUsed()
             var enemys = this.find(FIND_HOSTILE_CREEPS)
             if(enemys.length>0){
                 var playerEnemys = this.find(FIND_HOSTILE_CREEPS,{
@@ -37,6 +61,8 @@ const roomExtension = {
             else{
                 this.memory.warState=0
             }
+            const elapsed = Game.cpu.getUsed() - startCpu
+            // console.log(this.name+'_findEnemy:'+elapsed)
         }
         // 外矿房仅针对npc
         else if(this.controller.reservation){
@@ -59,6 +85,7 @@ const roomExtension = {
     */
     findRepairTarget: function(){
         if(this.controller.my){
+            const startCpu = Game.cpu.getUsed()
             if(!this.memory.repairTarget){
                 var target = this.find(FIND_STRUCTURES,{
                     filter: s => s.hits<1000 && s.structureType == STRUCTURE_RAMPART
@@ -78,6 +105,8 @@ const roomExtension = {
                     }
                 }
             }
+            const elapsed = Game.cpu.getUsed() - startCpu
+            // console.log(this.name+'_findRepairTarget:'+elapsed)
         }
     },
 
@@ -89,54 +118,59 @@ const roomExtension = {
     * @read Memory.rooms.linkCenter {id}
     */
     linkTrans: function(){
-        var linkForSource = _.forEach(this.memory.linkForSource, (id) => {
-            Game.getObjectById(id)
-        });
-        var linkForUse = _.forEach(this.memory.linkForUse, (id) => {
-            Game.getObjectById(id)
-        });
-        var linkCenter = Game.getObjectById(this.memory.linkCenter)
-        var fill = true
-        if(linkForUse.length>0){
-            let used=true
-            for(let i=0;i<linkForUp.length;i++){
-                if(linkForUse[i].store['energy']<400){
-                    fill = false
-                    if(linkForSource.length>0){
-                        for(let j=0;j<linkForSource.length;j++){
-                            if(linkForSource[j].store['energy']>400){
-                                if(linkForSource[j].transferEnergy(linkForUse[i]) === 0){
-                                    used=false
+        if(this.controller.my){
+            const startCpu = Game.cpu.getUsed()
+            var linkForSource = _.forEach(this.memory.linkForSource, (id) => {
+                Game.getObjectById(id)
+            });
+            var linkForUse = _.forEach(this.memory.linkForUse, (id) => {
+                Game.getObjectById(id)
+            });
+            var linkCenter = Game.getObjectById(this.memory.linkCenter)
+            var fill = true
+            if(linkForUse.length>0){
+                let used=true
+                for(let i=0;i<linkForUp.length;i++){
+                    if(linkForUse[i].store['energy']<400){
+                        fill = false
+                        if(linkForSource.length>0){
+                            for(let j=0;j<linkForSource.length;j++){
+                                if(linkForSource[j].store['energy']>400){
+                                    if(linkForSource[j].transferEnergy(linkForUse[i]) === 0){
+                                        used=false
+                                    }
+                                }
+                            }
+                        }
+                        if(used){
+                            if(linkCenter){
+                                if(linkCenter.store['energy']>400){
+                                    linkCenter.transferEnergy(linkForUse)
+                                }
+                                else{
+                                    this.memory.linkState=1
                                 }
                             }
                         }
                     }
-                    if(used){
-                        if(linkCenter){
-                            if(linkCenter.store['energy']>400){
-                                linkCenter.transferEnergy(linkForUse)
+                }
+            }
+            if(fill){
+                if(linkForSource.length>0){
+                    for(let i=0;i<linkForSource.length;i++){
+                        if(linkForSource[i].store['energy']>600){
+                            if(linkCenter.store['energy']<200){
+                                linkForSource[j].transferEnergy(linkForUse[i])
                             }
                             else{
-                                this.memory.linkState=1
+                                this.memory.linkState=0
                             }
                         }
                     }
                 }
             }
-        }
-        if(fill){
-            if(linkForSource.length>0){
-                for(let i=0;i<linkForSource.length;i++){
-                    if(linkForSource[i].store['energy']>600){
-                        if(linkCenter.store['energy']<200){
-                            linkForSource[j].transferEnergy(linkForUse[i])
-                        }
-                        else{
-                            this.memory.linkState=0
-                        }
-                    }
-                }
-            }
+            const elapsed = Game.cpu.getUsed() - startCpu
+            // console.log(this.name+'_linkTrans:'+elapsed)
         }
     },
 
@@ -160,6 +194,7 @@ const roomExtension = {
     findSource: function(){
         for(key in highwayRoom){
             if(highwayRoom[key].indexOf(this.name) !== -1){
+                const startCpu = Game.cpu.getUsed()
                 // 搜索deposit
                 var depo=this.find(FIND_DEPOSITS)
                 if(depo&&depo.length>0){
@@ -173,7 +208,7 @@ const roomExtension = {
                                 }
                             }
                             if(flagName&&depo[i].lastCooldown<90){
-                                this.createFlag(depo[i].pos,flagName)
+                                this.createFlag(depo[i].pos,flagName,COLOR_PURPLE)
                                 Memory.flags[flagName] = {
                                     source: depo[i].id,
                                     lastCooldown: depo[i].lastCooldown,
@@ -205,7 +240,7 @@ const roomExtension = {
                             if(!Game.flags[key+'_pb1']) var flagName = 'pb1'
                             if(!Game.flags[key+'_pb0']) var flagName = 'pb0'
                             if(flagName){
-                                this.createFlag(pb[i].pos,flag)
+                                this.createFlag(pb[i].pos,flagName,COLOR_RED)
                                 Memory.flags[flag] = {
                                     source: pb[i].id,
                                     amount:Math.floor(pb[i].power / 1600)+1,
@@ -224,6 +259,8 @@ const roomExtension = {
                         }
                     }
                 }
+                const elapsed = Game.cpu.getUsed() - startCpu
+                // console.log(this.name+'_findSource:'+elapsed)
             }
         }
     },
