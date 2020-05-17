@@ -175,19 +175,6 @@ const roomExtension = {
     },
 
     /**
-    * ob
-    *@read highwayRoom {Object{mainRoom:highwayRoomArray}}
-    */
-    observe: function(){
-        if(this.name in highwayRoom){
-            var ob=Game.getObjectById(this.memory.observe)
-            if(ob){
-                ob.observeRoom(highwayRoom[this.name][Math.floor(Math.random()*(highwayRoom[this.name].length));])
-            }
-        }
-    },
-
-    /**
     * 搜索过道资源
     *@read highwayRoom {Object{mainRoom:highwayRoomArray}}
     */
