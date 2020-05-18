@@ -1,6 +1,6 @@
 var extension={
     /**
-    * 获取底物lab
+    * 获取底物lab，设置底物lab状态为1
     * @returns {[firstLab:{Object}, secondLab:{Object}]}
     * @returns {Number} -1:目标错误, -2:lab不足,
     * 建议定时清除重新检查
@@ -8,7 +8,13 @@ var extension={
     getFeederLabs=function(){
         if(!!this.memory.feederLabs){
             var feederlabs=getGameObject(this.memory.feederLabs)
-            if(feederLabs.length === 2){
+            if(feederlabs.length === 2){
+                if(!feederlabs[0].memory || !feederlabs[0].memory.state){
+                    feederlabs[0].memory={state:1}
+                }
+                if(!feederlabs[1].memory || !feederlabs[1].memory.state){
+                    feederlabs[1].memory={state:1}
+                }
                 return [feederLabs[0],feederLabs[1]]
             }
             else{
@@ -32,6 +38,12 @@ var extension={
             return labDistances[a.id] - labDistances[b.id]
         })
         this.memory.feederLabs=setGameID([labs[0],labs[1]])
+        if(!labs[0].memory || !labs[0].memory.state){
+            labs[0].memory={state:1}
+        }
+        if(!labs[1].memory || !labs[1].memory.state){
+            labs[1].memory={state:1}
+        }
         return [labs[0],labs[1]]
     },
 
@@ -47,26 +59,41 @@ var extension={
             return -1
         }
         if(!!this.memory.vatLabs){
-            var vatlabs=getGameObject(this.memory.vatLabs)
-            if(vatLabs.length>0){
+            var labs=getGameObject(this.memory.vatLabs)
+            if(labs.length>0){
+                for(let i=0;i<labs.length;i++){
+                    if(!labs[i].memory || labs[i].memory){
+                        labs[i].memory={state:0}
+                    }
+                }
                 return getGameObject(vatLabs)
             }
             else{
                 return -1
             }
         }
-        const lab=this.find(FIND_STRUCTURES,{
-            filter: s => s.strutureType === STRUCTURE_LAB
+        const vatlabs=this.find(FIND_STRUCTURES,{
+            filter: s => s.strutureType === STRUCTURE_LAB &&
+                    (!s.memory || s.memory.state === 0)
         })
-        const vatLabs=[]
-        for(const lab of labs){
-            if(feederLabs[0].id === lab.id || feederLabs[1].id === lab.id){
-                continue
-            }
-            vatLabs.push(lab.id)
+        this.memory.vatLabs=setGameID(vatlabs)
+        return getGameObject(vatlabs)
+    },
+
+    /**
+    * 获取当前反应
+    * @returns {Object}
+    * @returns {Number} -1:目标错误, -2:lab不足,
+    * 建议定时清除重新检查
+    */
+    getActiveReaction=function(){
+        const reaction=this.memory.reaction
+        if(!reaction){
+            return -1
         }
-        this.memory.vatLabs=setGameID(vatLabs)
-        return getGameObject(vatLabs)
+        var target=reaction.compound
+        mid=REACTION[target]
+        
     }
 }
 module.exports = function () {
