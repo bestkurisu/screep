@@ -1,3 +1,5 @@
+'use strict'
+
 var whitelist=require('whitelist')
 var extension={
     /**

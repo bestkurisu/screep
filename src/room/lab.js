@@ -1,9 +1,10 @@
+'use strict'
+
 var extension={
     /**
     * 获取底物lab，设置底物lab状态为1
     * @returns {[firstLab:{Object}, secondLab:{Object}]}
-    * @returns {Number} -1:目标错误, -2:lab不足,
-    * 建议定时清除重新检查
+    * @returns {Number} -7:目标错误
     */
     getFeederLabs:function(){
         if(!!this.memory.feederLabs){
@@ -18,14 +19,12 @@ var extension={
                 return [feederLabs[0],feederLabs[1]]
             }
             else{
-                return -1
+                return ERR_INVALID_TARGET
             }
         }
-        const labs=this.find(FIND_STRUCTURES,{
-            filter: s => s.strutureType === STRUCTURE_LAB
-        })
+        const labs=this.strctures[STRUCTURE_LAB]
         if(!labs || labs.length<3){
-            return -2
+            return false
         }
         const labDistances = {}
         for (const lab of labs) {
@@ -48,15 +47,15 @@ var extension={
     },
 
     /**
-    * 获取底物lab
+    * 获取产物lab
     * @returns {ObjectArray}
-    * @returns {Number} -1:目标错误, -2:lab不足,
+    * @returns {Number} -7:目标错误, -2:lab不足,
     * 建议定时清除重新检查
     */
     getVatLabs:function(){
         var feederLabs=this.getFeederLabs()
         if(!feederlabs){
-            return -1
+            return ERR_INVALID_TARGET
         }
         if(!!this.memory.vatLabs){
             var labs=getGameObject(this.memory.vatLabs)
@@ -69,7 +68,7 @@ var extension={
                 return getGameObject(vatLabs)
             }
             else{
-                return -1
+                return false
             }
         }
         const vatlabs=this.find(FIND_STRUCTURES,{
@@ -88,7 +87,7 @@ var extension={
     getActiveReaction:function(){
         const reaction=this.memory.reaction
         if(!reaction){
-            return -1
+            return false
         }
         const target=reaction.compound
         const amount=reaction.amount
@@ -125,7 +124,7 @@ var extension={
             }
             else{
                 this.memory.reaction=undefined
-                return 0
+                return OK
             }
         }
         return queue[this.memory.labState]
@@ -156,8 +155,8 @@ var extension={
                 break
             }
         }
-        return 0
-    }
+        return OK
+    },
 }
 
 
