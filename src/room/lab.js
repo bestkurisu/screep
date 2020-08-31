@@ -22,7 +22,7 @@ var extension={
                 return ERR_INVALID_TARGET
             }
         }
-        const labs=this.strctures[STRUCTURE_LAB]
+        const labs=this.lab
         if(!labs || labs.length<3){
             return false
         }

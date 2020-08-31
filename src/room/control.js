@@ -1,6 +1,5 @@
 'use strict'
 
-
 const roomLevelOptions={
     1: {
         UPGRADERS_QUANTITY: 5,

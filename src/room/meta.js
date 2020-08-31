@@ -172,12 +172,12 @@ function convertToRoomname(x, y, startXdir, startYdir){
     return xdir+xNorm+ydir+yNorm
 }
 Room.prototype.getSuicideBooth=function(){
-    if(!this.structures[STRUCTURE_SPAWN] || !this.structures[STRUCTURE_SPAWN].length){
+    if(!this.spawn || !this.spawn.length){
         return false
     }
-    let spawn=this.structures[STRUCTURE_SPAWN][0]
+    let spawn=this.spawn[0]
     if(this.storage){
-        spawn=this.storage.pos.findClosestByRange(this.structures[STRUCTURE_SPAWN])
+        spawn=this.storage.pos.findClosestByRange(this.spawn)
     }
     return new RoomPosition(spawn.pos.x - 1, spawn.pos.y, spawn.room.name)
 }
@@ -190,3 +190,24 @@ Room.prototype.getFactotumHome=function(){
         return this.getPositionAt(suicideBooth.pos.x, suicideBooth.pos.y-1)
     }
 }
+Room.prototype.getStructuresToFill=function(structureTypes){
+    if(!this.__fillable){
+        this.__fillable=this.find(FIND_MY_STRUCTURES, {
+            filter: function (structure){
+                if(structureTypes.indexOf(structure.structureType) === -1){
+                    return false
+                }
+                if(!structure.energyCapacity){
+                    return false
+                }
+                return structure.energy < structure.energyCapacity
+            }
+        })
+    }
+    return this.__fillable
+}
+Object.defineProperty(Structure.prototype,'memory',{
+    get(){
+        return this.room.memory.objects[this.id]=this.room.memory.objects[this.id] || {}
+    }
+})

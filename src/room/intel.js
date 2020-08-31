@@ -1,24 +1,23 @@
 'use strict'
 
-global.SEGMENT_INTEL = 'room_intel'
+global.SEGMENT_INTEL='room_intel'
 sos.lib.vram.markCritical(SEGMENT_INTEL)
 
-const maxScoutDistance = 11
+const maxScoutDistance=11
 
-// To reduce memory we use short keys for the room objects, so for readability those are mapped to global constants.
-global.INTEL_LEVEL = 'l'
-global.INTEL_PRACTICAL_LEVEL = 'r'
-global.INTEL_OWNER = 'o'
-global.INTEL_MINERAL = 'm'
-global.INTEL_SOURCES = 's'
-global.INTEL_UPDATED = 'u'
-global.INTEL_RESOURCE_POSITIONS = 'p'
-global.INTEL_WALKABILITY = 'w'
-global.INTEL_SWAMPINESS = 'a'
-global.INTEL_BLOCKED_EXITS = 'b'
+global.INTEL_LEVEL='l'
+global.INTEL_PRACTICAL_LEVEL='r'
+global.INTEL_OWNER='o'
+global.INTEL_MINERAL='m'
+global.INTEL_SOURCES='s'
+global.INTEL_UPDATED='u'
+global.INTEL_RESOURCE_POSITIONS='p'
+global.INTEL_WALKABILITY='w'
+global.INTEL_SWAMPINESS='a'
+global.INTEL_BLOCKED_EXITS='b'
 
 // 存储
-Room.prototype.saveIntel = function (refresh = false) {
+Room.prototype.saveIntel=function(refresh=false){
     // 写一个memory，不知道干啥
     if (!Memory.intel) {
         Memory.intel = {
@@ -30,53 +29,53 @@ Room.prototype.saveIntel = function (refresh = false) {
 
     // 放一些缓存，可以接受参数进行刷新
     let roominfo
-    if (refresh) {
-        roominfo = {}
+    if(refresh){
+        roominfo={}
     }
-    else {
-        roominfo = this.getIntel({ skipRequest: true })
-        if (!roominfo){
-            roominfo = {}
+    else{
+        roominfo=this.getIntel({skipRequest: true})
+        if(!roominfo){
+            roominfo={}
         }
     }
 
     // 设置随机数更新时间
-    roominfo[INTEL_UPDATED] = Game.time - _.random(0, 10)
+    roominfo[INTEL_UPDATED]=Game.time - _.random(0, 10)
 
     // 有controller的房间，存username、level和可用的出口
-    if (this.controller) {
-        if (this.controller.owner) {
-            roominfo[INTEL_OWNER] = this.controller.owner.username
+    if(this.controller){
+        if(this.controller.owner){
+            roominfo[INTEL_OWNER]=this.controller.owner.username
         }
-        else if (this.controller.reservation) {
-            roominfo[INTEL_OWNER] = this.controller.reservation.username
+        else if(this.controller.reservation){
+            roominfo[INTEL_OWNER]=this.controller.reservation.username
         }
-        else if (roominfo[INTEL_OWNER]) {
+        else if(roominfo[INTEL_OWNER]){
             delete roominfo[INTEL_OWNER]
         }
-        if (this.controller.level) {
+        if(this.controller.level){
             roominfo[[INTEL_LEVEL]] = this.controller.level
         }
-        else if (roominfo[INTEL_LEVEL]) {
+        else if(roominfo[INTEL_LEVEL]){
             delete roominfo[INTEL_LEVEL]
             delete roominfo[INTEL_PRACTICAL_LEVEL]
         }
 
         // 检测出口是否有墙或ram
-        const blocked = []
-        if (this.structures[STRUCTURE_WALL] || this.structures[STRUCTURE_RAMPART]) {
-            const centerish = this.controller.pos
-            const exits = _.values(Game.map.describeExits(this.name))
-            const name = this.name
-            for (const exit of exits) {
-                const targetPos = new RoomPosition(25, 25, exit)
-                const path = PathFinder.search(centerish, { pos: targetPos, range: 24 },
+        const blocked=[]
+        if(this.wall || this.rampart){
+            const centerish=this.controller.pos
+            const exits=_.values(Game.map.describeExits(this.name))
+            const name=this.name
+            for(const exit of exits){
+                const targetPos=new RoomPosition(25, 25, exit)
+                const path=PathFinder.search(centerish, {pos: targetPos, range: 24},
                     {
                         swampCost: 1,
                         maxRooms: 2,
                         maxCost: 1000,
-                        roomCallback: function (roomName) {
-                            if (roomName !== name && roomName !== exit) {
+                        roomCallback: function(roomName){
+                            if(roomName !== name && roomName !== exit){
                                 return false
                             }
                             return Room.getCostmatrix(roomName, {
@@ -89,39 +88,39 @@ Room.prototype.saveIntel = function (refresh = false) {
                             })
                         }
                 })
-                if (path.incomplete) {
+                if(path.incomplete){
                     blocked.push(exit)
                 }
             }
         }
-        if (blocked.length > 0) {
-            roominfo[INTEL_BLOCKED_EXITS] = blocked
+        if(blocked.length>0){
+            roominfo[INTEL_BLOCKED_EXITS]=blocked
         }
-        else if (roominfo[INTEL_BLOCKED_EXITS]) {
+        else if(roominfo[INTEL_BLOCKED_EXITS]){
             delete roominfo[INTEL_BLOCKED_EXITS]
         }
     }
 
     // 存储能量和矿的位置
-    const recordResourceLocation = this.structures[STRUCTURE_KEEPER_LAIR] !== undefined
-    if (recordResourceLocation) {
-        roominfo[INTEL_RESOURCE_POSITIONS] = []
+    const recordResourceLocation=this.keeperLair !== undefined
+    if(recordResourceLocation){
+        roominfo[INTEL_RESOURCE_POSITIONS]=[]
     }
-    if (!roominfo[INTEL_MINERAL]) {
-        const minerals = this.find(FIND_MINERALS)
-        if (minerals.length > 0) {
-            roominfo[INTEL_MINERAL] = minerals[0].mineralType
-            if (recordResourceLocation) {
+    if(!roominfo[INTEL_MINERAL]){
+        const minerals=this.find(FIND_MINERALS)
+        if(minerals.length>0){
+            roominfo[INTEL_MINERAL]=minerals[0].mineralType
+            if(recordResourceLocation){
                 roominfo[INTEL_RESOURCE_POSITIONS].push(minerals[0].pos.serialize())
             }
         }
     }
-    if (!roominfo[INTEL_SOURCES]) {
-        const sources = this.find(FIND_SOURCES)
-        if (sources.length > 0) {
-            roominfo[INTEL_SOURCES] = sources.length
-            if (recordResourceLocation) {
-                for (let source of sources) {
+    if(!roominfo[INTEL_SOURCES]){
+        const sources=this.find(FIND_SOURCES)
+        if(sources.length>0){
+            roominfo[INTEL_SOURCES]=sources.length
+            if(recordResourceLocation){
+                for(let source of sources){
                     roominfo[INTEL_RESOURCE_POSITIONS].push(source.pos.serialize())
                 }
             }
@@ -129,193 +128,188 @@ Room.prototype.saveIntel = function (refresh = false) {
     }
 
     // 记录地形和比例
-    if (!roominfo[INTEL_SWAMPINESS] || !roominfo[INTEL_WALKABILITY]) {
-        let walkable = 0
-        let swamps = 0
+    if(!roominfo[INTEL_SWAMPINESS] || !roominfo[INTEL_WALKABILITY]){
+        let walkable=0
+        let swamps=0
         let x
         let y
-        const terrain = Game.map.getRoomTerrain(this.name)
-        for (x = 0; x < 50; x++) {
-            for (y = 0; y < 50; y++) {
-                if (terrain.isWalkable(x, y)) {
+        const terrain=Game.map.getRoomTerrain(this.name)
+        for(x=0; x<50; x++){
+            for(y=0; y<50; y++){
+                if(terrain.isWalkable(x, y)){
                     walkable++
                 }
-                if (terrain.isSwamp(x, y)) {
+                if(terrain.isSwamp(x, y)){
                     swamps++
                 }
             }
         }
-        roominfo[INTEL_WALKABILITY] = Math.round((walkable / 2500) * 1000) / 1000
-        roominfo[INTEL_SWAMPINESS] = Math.round((swamps / walkable) * 1000) / 1000
+        roominfo[INTEL_WALKABILITY]=Math.round((walkable/2500)*1000)/1000
+        roominfo[INTEL_SWAMPINESS]=Math.round((swamps/walkable)*1000)/1000
     }
 
     // 如果是侦查目标就可以移除了
-    if (Memory.intel.targets[this.name]) {
+    if(Memory.intel.targets[this.name]){
         delete Memory.intel.targets[this.name]
     }
-    if (Memory.intel.active[this.name]) {
+    if(Memory.intel.active[this.name]){
         delete Memory.intel.active[this.name]
     }
 
-    Memory.intel.buffer[this.name] = roominfo
+    Memory.intel.buffer[this.name]=roominfo
     return roominfo
 }
 
 // 同步到别的地方？
-Room.flushIntelToSegment = function () {
-    if (!Memory.intel || !Memory.intel.buffer) {
+Room.flushIntelToSegment=function(){
+    if(!Memory.intel || !Memory.intel.buffer){
         return
     }
-    const rooms = Object.keys(Memory.intel.buffer)
-    if (rooms.length <= 0) {
+    const rooms=Object.keys(Memory.intel.buffer)
+    if(rooms.length <= 0){
         return
     }
-    const intelmap = sos.lib.vram.getData(SEGMENT_INTEL)
+    const intelmap=sos.lib.vram.getData(SEGMENT_INTEL)
     sos.lib.vram.markDirty(SEGMENT_INTEL)
     let roomname
     for (roomname in Memory.intel.buffer){
-        intelmap[roomname] = Memory.intel.buffer[roomname]
+        intelmap[roomname]=Memory.intel.buffer[roomname]
         delete Memory.intel.buffer[roomname]
     }
 }
 
 // 取得信息
-Room.prototype.getIntel = function (opts = {}){
-    if (Memory.intel && Memory.intel.buffer[this.name]){
+Room.prototype.getIntel=function(opts={}){
+    if(Memory.intel && Memory.intel.buffer[this.name]){
         return Memory.intel.buffer[this.name]
     }
-    const intelmap = sos.lib.vram.getData(SEGMENT_INTEL)
-    if (intelmap[this.name]) {
+    const intelmap=sos.lib.vram.getData(SEGMENT_INTEL)
+    if(intelmap[this.name]){
         return intelmap[this.name]
     }
-    if (Game.rooms[this.name]) {
+    if(Game.rooms[this.name]){
         Game.rooms[this.name].saveIntel(true)
-        if (Memory.intel && Memory.intel.buffer[this.name]){
+        if(Memory.intel && Memory.intel.buffer[this.name]){
             return Memory.intel.buffer[this.name]
         }
     }
-    else if (qlib.map.getDistanceToEmpire(this.name, 'manhattan') <= 18){
+    else if(qlib.map.getDistanceToEmpire(this.name, 'manhattan') <= 18){
         Room.requestIntel(this.name)
     }
     return false
 }
 
-Room.getResourcesPositions = function (roomname) {
-    const roominfo = Room.getIntel(roomname)
-    if (!roominfo[INTEL_RESOURCE_POSITIONS]) {
+Room.getResourcesPositions=function(roomname){
+    const roominfo=Room.getIntel(roomname)
+    if(!roominfo[INTEL_RESOURCE_POSITIONS]){
         return false
     }
-    const positions = []
+    const positions=[]
     let serializedPosition
-    for (serializedPosition of roominfo[INTEL_RESOURCE_POSITIONS]) {
+    for(serializedPosition of roominfo[INTEL_RESOURCE_POSITIONS]){
         positions.push(RoomPosition.deserialize(serializedPosition))
     }
     return positions
 }
 
-Room.requestIntel = function (roomname) {
-    if (Game.rooms[roomname]) {
+Room.requestIntel=function(roomname){
+    if(Game.rooms[roomname]){
         Game.rooms[roomname].saveIntel()
         return
     }
-    if (!Game.map.isRoomAvailable(roomname)) {
+    if(!Game.map.isRoomAvailable(roomname)){
         return
     }
-    if (!qlib.map.reachableFromEmpire(roomname, 'manhattan')) {
+    if(!qlib.map.reachableFromEmpire(roomname, 'manhattan')){
         return
     }
-    if (!Memory.intel) {
-        Memory.intel = {
+    if(!Memory.intel){
+        Memory.intel={
             buffer: {},
             targets: {},
             active: {}
         }
     }
 
-    // Hard limit on MAX_INTEL_TARGETS rooms targetted to prevent memory leak.
-    const current = Object.keys(Memory.intel.targets)
-    if (current.length >= MAX_INTEL_TARGETS) {
+    // 限制最大目标数
+    const current=Object.keys(Memory.intel.targets)
+    if(current.length >= MAX_INTEL_TARGETS){
         return
     }
-    if (!Memory.intel.targets[roomname]) {
-        Memory.intel.targets[roomname] = Game.time
+    if(!Memory.intel.targets[roomname]){
+        Memory.intel.targets[roomname]=Game.time
     }
 }
 
-Room.getScoutTarget = function (creep) {
-    let target = false
-    let targetRooms = !Memory.intel ? [] : _.shuffle(Object.keys(Memory.intel.targets))
-    const assignedRooms = !Memory.intel ? [] : Object.keys(Memory.intel.active)
+Room.getScoutTarget=function(creep){
+    let target=false
+    let targetRooms=!Memory.intel?[]:_.shuffle(Object.keys(Memory.intel.targets))
+    const assignedRooms=!Memory.intel?[]:Object.keys(Memory.intel.active)
 
-    // In case target room cleanup failed manually clear it instead of wasting cpu.
-    if (targetRooms.length > (MAX_INTEL_TARGETS * 2)) {
-        Memory.intel.targets = {}
-        targetRooms = []
+    // 又清除一遍
+    if(targetRooms.length>(MAX_INTEL_TARGETS*2)){
+        Memory.intel.targets={}
+        targetRooms=[]
     }
 
-    if (targetRooms.length > 0) {
-        let oldest = false
+    if(targetRooms.length>0){
+        let oldest=false
         let testRoom
-        for (testRoom of targetRooms) {
-            // Filter out invalid rooms
-            if (!Game.map.isRoomAvailable(testRoom)) {
+        for(testRoom of targetRooms){
+            if(!Game.map.isRoomAvailable(testRoom)){
                 continue
             }
-
-            // Filter out rooms that already have a scount creep assigned to them.
-            if (assignedRooms.indexOf(testRoom) >= 0) {
-                if (Game.creeps[Memory.intel.active[testRoom]]) {
+            // 已经安排过的
+            if(assignedRooms.indexOf(testRoom) >= 0){
+                if(Game.creeps[Memory.intel.active[testRoom]]){
                     continue
                 }
-                else {
+                else{
                     delete Memory.intel.active[testRoom]
                 }
             }
-            if (Game.map.getRoomLinearDistance(creep.room.name, testRoom) > maxScoutDistance) {
+            if(Game.map.getRoomLinearDistance(creep.room.name, testRoom)>maxScoutDistance){
                 continue
             }
-            if (!oldest || oldest > Memory.intel.targets[testRoom]) {
-                oldest = Memory.intel.targets[testRoom]
-                target = testRoom
+            if(!oldest || oldest > Memory.intel.targets[testRoom]){
+                oldest=Memory.intel.targets[testRoom]
+                target=testRoom
             }
         }
     }
-
-    if (Game.rooms[target]) {
+    if(Game.rooms[target]){
         target = false
     }
-
-    if (!target) {
-        const adjacent = _.shuffle(_.values(Game.map.describeExits(creep.room.name)))
-        target = adjacent[0]
-        let oldest = 0
+    if(!target){
+        const adjacent=_.shuffle(_.values(Game.map.describeExits(creep.room.name)))
+        target=adjacent[0]
+        let oldest=0
         let testRoom
-        for (testRoom of adjacent) {
-            if (!Game.map.isRoomAvailable(testRoom)) {
+        for(testRoom of adjacent){
+            if(!Game.map.isRoomAvailable(testRoom)){
                 continue
             }
-            const roominfo = Room.getIntel(testRoom)
+            const roominfo=Room.getIntel(testRoom)
             let age
-            if (!roominfo) {
-                age = Infinity
+            if(!roominfo){
+                age=Infinity
             }
-            else {
-                age = assignedRooms.indexOf(testRoom) >= 0 ? 0 : Game.time - roominfo[INTEL_UPDATED]
-                age = Math.floor(age / 10000) * 10000
+            else{
+                age=assignedRooms.indexOf(testRoom) >= 0?0:Game.time-roominfo[INTEL_UPDATED]
+                age=Math.floor(age/10000)*10000
             }
-            if (target && oldest === age) {
-                if (Math.random() >= 0.5) {
-                    target = testRoom
+            if(target && oldest === age){
+                if(Math.random() >= 0.5){
+                    target=testRoom
                 }
             }
-            else if (oldest < age) {
-                oldest = age
-                target = testRoom
+            else if(oldest<age){
+                oldest=age
+                target=testRoom
             }
         }
     }
-
-    creep.memory.starget = target
-    Memory.intel.active[target] = creep.name
+    creep.memory.starget=target
+    Memory.intel.active[target]=creep.name
     return target
 }
