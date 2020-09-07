@@ -2,31 +2,34 @@
 
 var whitelist=require('whitelist')
 
-//搜索敌人间隔,10Tick检测一次
-const checkInterval = 10; 
+const checkInterval=10 
+const attacker_num=1
+const builder_num=1
+const attacker_boost=false
+const builder_boost=false
 
 var defense = {
     main: function(roomName){
         const room=Game.rooms[roomName];
         if(room){
             try {
-                const check=this.check(room);
-                this.tower(room);
+                const check=this.check(room)
+                this.tower(room)
                 if(check === 2){
-                    room.visual.text('DEFENSE', 25, 25);
+                    room.visual.text('DEFENSE', 25, 25)
                     if(!room.memory.defense.savedMatrix || Game.time%50 === 0){
-                        this.make_defense_cost(room);
+                        this.make_defense_cost(room)
                     }
-                    this.spawn_Defender(room, 1, 1);//0表示满员 1表示未满
+                    this.spawn_Defender(room, attacker_num, builder_num)
                 } 
                 else{
-                    room.visual.text('safe', room.controller.pos);
-                    this.builder_run(room);
-                    return;
+                    room.visual.text('safe', room.controller.pos)
+                    this.builder_run(room)
+                    return
                 }
-                this.atk_run(room);
+                this.atk_run(room)
             } 
-            catch (err) {
+            catch(err){
                 console.log(err);
                 room.memory.defense = {
                     'hostile_Creeps': [],
@@ -36,80 +39,81 @@ var defense = {
             }
         }
     },
-    check: function (room) {
-        if (room.memory.defense.hostile_Creeps.length === 0) {
-            if (Game.time % checkInterval > 0) {
-                return 1;
+    check: function(room){
+        if(room.memory.defense.hostile_Creeps.length === 0){
+            if(Game.time%checkInterval>0){
+                return OK
             }
-            room.memory.defense.hostile_Creeps = [];
-            room.find(FIND_HOSTILE_CREEPS).forEach(function (creep, index) {
-                if (creep.getActiveBodyparts('heal') ||
+            room.memory.defense.hostile_Creeps=[]
+            room.find(FIND_HOSTILE_CREEPS).forEach(function(creep, index){
+                if(creep.owner.username !== 'Invader' &&
+                    whitelist.indexOf(creep.owner.username) !== -1 &&
+                    (creep.getActiveBodyparts('heal') ||
                     creep.getActiveBodyparts('attack') ||
                     creep.getActiveBodyparts('ranged_attack') ||
-                    creep.getActiveBodyparts('work') ||
-                    creep.owner.username !== 'Invader') {
-                    room.memory.defense.hostile_Creeps.push(creep.id);//如果检测到有敌人则会添加进列表
+                    creep.getActiveBodyparts('work'))){
+                    room.memory.defense.hostile_Creeps.push(creep.id)
                 }
-            });
-            if (room.memory.defense.hostile_Creeps.length > 0) {
-                return 0;
+            })
+            if(room.memory.defense.hostile_Creeps.length>0){
+                return OK
             }
-            return 1;
+            return OK
         }
-        for (const index in room.memory.defense.hostile_Creeps) {
-            const id = room.memory.defense.hostile_Creeps[index];
-            const H_creeps = Game.getObjectById(id);
-            if (!H_creeps) {
-                room.memory.defense.hostile_Creeps.splice(index, 1);
+        for(const index in room.memory.defense.hostile_Creeps){
+            const id=room.memory.defense.hostile_Creeps[index]
+            const H_creeps=Game.getObjectById(id)
+            if(!H_creeps){
+                room.memory.defense.hostile_Creeps.splice(index, 1)
             }
         }
-        return 2;
+        return 2
     },
-    spawn_Defender: function (room, dNumber, bNumber) {
-        const defend = room.memory.defense;
-        if (defend.Defender_creeps.atk.length >= dNumber && defend.Defender_creeps.builder.length >= bNumber) {//人数不够才会执行
-            return 0;
+    spawn_Defender: function(room, dNumber, bNumber){
+        const defend=room.memory.defense
+        if(defend.Defender_creeps.atk.length >= dNumber && defend.Defender_creeps.builder.length >= bNumber){
+            return OK
         }
-        for (const spawn of room.spawns) {
-            if (spawn.spawning) {
-                continue;//生产中则跳过
+        for(const spawn of room.spawns){
+            if(spawn.spawning){
+                continue
             }
-            const name = this.name();
-            if (room.memory.defense.Defender_creeps.atk.length < dNumber) {
-                if (spawn.spawnCreep(this.mb({ 'attack': 32, 'move': 16 }), name, { memory: { 'role': 'R_D', 'roomname': room.name, 'boost': false } }) === 0) {
-                    room.memory.defense.Defender_creeps.atk.push(name);
-                    break;
+            const name=this.name();
+            if(room.memory.defense.Defender_creeps.atk.length < dNumber){
+                if(spawn.spawnCreep(this.mb({'attack': 32, 'move': 16}), name, {memory: {'role': 'R_D', 'roomname': room.name, 'boost':attacker_boost}}) === 0){
+                    room.memory.defense.Defender_creeps.atk.push(name)
+                    break
                 }
             }
-            if (room.memory.defense.Defender_creeps.builder.length < bNumber) {
-                if (spawn.spawnCreep(this.mb({ 'work': 16, 'carry': 16, 'move': 16 }), name, { memory: { 'role': 'R_B', 'roomname': room.name, 'boost': false } }) === 0) {
-                    room.memory.defense.Defender_creeps.builder.push(name);
-                    break;
+            if(room.memory.defense.Defender_creeps.builder.length < bNumber){
+                if(spawn.spawnCreep(this.mb({'work': 16, 'carry': 16, 'move': 16}), name, {memory: {'role': 'R_B', 'roomname': room.name, 'boost':builder_boost}}) === 0){
+                    room.memory.defense.Defender_creeps.builder.push(name)
+                    break
                 }
             }
         }
-        return 1;
+        return OK
     },
-    atk_run: function (room) {
-        const cost = PathFinder.CostMatrix.deserialize(room.memory.defense.savedMatrix);
-        const creepNameList = room.memory.defense.Defender_creeps.atk;
-        for (const index in creepNameList) {
-            const name = creepNameList[index];
-            const creep = Game.creeps[name];
-            if (!creep) {
-                room.memory.defense.Defender_creeps.atk.splice(index, 1); //死了便删掉
-                continue;
+    atk_run: function(room){
+        const cost=PathFinder.CostMatrix.deserialize(room.memory.defense.savedMatrix)
+        const creepNameList=room.memory.defense.Defender_creeps.atk
+        for(const index in creepNameList){
+            const name=creepNameList[index]
+            const creep=Game.creeps[name]
+            if(!creep){
+                room.memory.defense.Defender_creeps.atk.splice(index, 1)
+                continue
             }
-            creep.room.visual.text(creep.memory.role, creep.pos);
-            if (creep.memory.boost) {
-                var lab = creep.room.find(FIND_STRUCTURES,{
+            creep.room.visual.text(creep.memory.role, creep.pos)
+            if(creep.memory.boost){
+                var lab=creep.room.find(FIND_STRUCTURES,{
                     filter: s => s.structureType === 'lab' &&
-                            s.store['XUH2O'] > 30
+                            s.store['XUH2O']>30
                 })
                 if(lab.length>0){
                     if(creep.isNearTo(lab[0])){
                         lab[0].boostCreep(creep)
-                        creep.memory.boost = false
+                        creep.memory.boost=false
                     }
                     else{
                         creep.moveTo(lab[0],{range:1})
@@ -119,61 +123,62 @@ var defense = {
                     creep.memory.boost = false
                 }
             }
-            if (creep.memory.target) {
-                const H_creeps = Game.getObjectById(creep.memory.target);
-                if (!H_creeps) {
-                    delete creep.memory.target;
-                    continue;
+            if(creep.memory.target){
+                const H_creeps=Game.getObjectById(creep.memory.target)
+                if(!H_creeps){
+                    delete creep.memory.target
+                    continue
                 }
-                if (creep.pos.isNearTo(H_creeps)) {
-                    for (const tower of creep.room.towers) {
-                        tower.attack(H_creeps);
+                if(creep.pos.isNearTo(H_creeps)){
+                    for(const tower of creep.room.towers){
+                        tower.attack(H_creeps)
                     }
-                    if (creep.getActiveBodyparts('attack')) {
-                        creep.attack(H_creeps);
+                    if(creep.getActiveBodyparts('attack')){
+                        creep.attack(H_creeps)
                     }
-                    if (creep.getActiveBodyparts('ranged_attack')) {
-                        creep.rangedMassAttack();
+                    if(creep.getActiveBodyparts('ranged_attack')){
+                        creep.rangedMassAttack()
                     }
-                } else {
-                    if (creep.pos.inRangeTo(H_creeps, 3)) {
-                        creep.rangedAttack(H_creeps);
+                } 
+                else{
+                    if(creep.pos.inRangeTo(H_creeps, 3)){
+                        creep.rangedAttack(H_creeps)
                     }
                     creep.moveTo(H_creeps, {
                         range: 1,
-                        costCallback: function (roomName) {
-                            const room = Game.rooms[roomName];
-                            if (!room) return;
-                            room.find(FIND_CREEPS).forEach((creep) => cost.set(creep.pos.x, creep.pos.y, 255));
-                            return cost;
-                        }, visualizePathStyle: { stroke: '#aaaacf', opacity: 0.3 }
-                    });
+                        costCallback: function(roomName){
+                            const room=Game.rooms[roomName]
+                            if(!room) return
+                            room.find(FIND_CREEPS).forEach((creep) => cost.set(creep.pos.x, creep.pos.y, 255))
+                            return cost
+                        }, visualizePathStyle: {stroke: '#aaaacf', opacity: 0.3}
+                    })
                 }
-                continue;
+                continue
             }
-
-            if (this.find_target(creep) === 0) {
-                creep.say('ok');
-            } else {
-                creep.say('noAttack');
+            if(this.find_target(creep) === 0){
+                creep.say('ok')
+            } 
+            else{
+                creep.say('noAttack')
             }
-            continue; //如果有目标的话就执行
+            continue
         }
     },
-    builder_run: function (room) {
-        const cost = PathFinder.CostMatrix.deserialize(room.memory.savedMatrix);
-        const creepNameList = room.memory.defense.Defender_creeps.builder;
-        for (const index in creepNameList) {
-            const name = creepNameList[index];
-            const creep = Game.creeps[name];
-            if (!creep) {
-                room.memory.defense.Defender_creeps.builder.splice(index, 1);
-                continue;
+    builder_run: function(room){
+        const cost=PathFinder.CostMatrix.deserialize(room.memory.savedMatrix)
+        const creepNameList = room.memory.defense.Defender_creeps.builder
+        for(const index in creepNameList){
+            const name=creepNameList[index]
+            const creep=Game.creeps[name]
+            if(!creep){
+                room.memory.defense.Defender_creeps.builder.splice(index, 1)
+                continue
             }
-            creep.room.visual.text(creep.memory.role, creep.pos);
-            if (!creep.memory.getEnergy && creep.store.getUsedCapacity('energy') === 0) {
-                creep.memory.getEnergy = true;//能量用完的时候
-                creep.memory.buildtarget = false;
+            creep.room.visual.text(creep.memory.role, creep.pos)
+            if(!creep.memory.getEnergy && creep.store.getUsedCapacity('energy') === 0){
+                creep.memory.getEnergy = true
+                creep.memory.buildtarget = false
                 continue;
             }
             if (creep.memory.boost) {
