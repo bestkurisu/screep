@@ -18,7 +18,6 @@ global.INTEL_BLOCKED_EXITS='b'
 
 // 存储
 Room.prototype.saveIntel=function(refresh=false){
-    // 写一个memory，不知道干啥
     if (!Memory.intel) {
         Memory.intel = {
             buffer: {},
@@ -27,7 +26,6 @@ Room.prototype.saveIntel=function(refresh=false){
         }
     }
 
-    // 放一些缓存，可以接受参数进行刷新
     let roominfo
     if(refresh){
         roominfo={}
@@ -160,7 +158,7 @@ Room.prototype.saveIntel=function(refresh=false){
     return roominfo
 }
 
-// 同步到别的地方？
+// 同步到缓存
 Room.flushIntelToSegment=function(){
     if(!Memory.intel || !Memory.intel.buffer){
         return
@@ -217,9 +215,6 @@ Room.requestIntel=function(roomname){
         Game.rooms[roomname].saveIntel()
         return
     }
-    if(!Game.map.isRoomAvailable(roomname)){
-        return
-    }
     if(!qlib.map.reachableFromEmpire(roomname, 'manhattan')){
         return
     }
@@ -246,7 +241,7 @@ Room.getScoutTarget=function(creep){
     let targetRooms=!Memory.intel?[]:_.shuffle(Object.keys(Memory.intel.targets))
     const assignedRooms=!Memory.intel?[]:Object.keys(Memory.intel.active)
 
-    // 又清除一遍
+    // 限制最大目标数
     if(targetRooms.length>(MAX_INTEL_TARGETS*2)){
         Memory.intel.targets={}
         targetRooms=[]
@@ -254,11 +249,7 @@ Room.getScoutTarget=function(creep){
 
     if(targetRooms.length>0){
         let oldest=false
-        let testRoom
-        for(testRoom of targetRooms){
-            if(!Game.map.isRoomAvailable(testRoom)){
-                continue
-            }
+        for( let testRoom of targetRooms){
             // 已经安排过的
             if(assignedRooms.indexOf(testRoom) >= 0){
                 if(Game.creeps[Memory.intel.active[testRoom]]){
@@ -286,9 +277,6 @@ Room.getScoutTarget=function(creep){
         let oldest=0
         let testRoom
         for(testRoom of adjacent){
-            if(!Game.map.isRoomAvailable(testRoom)){
-                continue
-            }
             const roominfo=Room.getIntel(testRoom)
             let age
             if(!roominfo){

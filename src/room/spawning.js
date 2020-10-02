@@ -38,9 +38,6 @@ Room.prototype.getQueuedCreep=function(){
         return false
     }
     const creeps=Object.keys(Memory.spawnqueue.index[this.name])
-    if(creeps.length<1){
-        return false
-    }
     const that = this
     creeps.sort(function (a, b){
         const aP = Memory.spawnqueue.index[that.name][a].priority ? Memory.spawnqueue.index[that.name][a].priority : SPAWN_DEFAULT_PRIORITY
@@ -55,7 +52,7 @@ Room.prototype.getQueuedCreep=function(){
     }
     options.build=build
     options.name=creeps[0]
-    if(!this.qieied){
+    if(!this.queued){
         this.queued=[]
     }
     this.queued.push(options.name)
@@ -73,10 +70,7 @@ Room.prototype.isQueued=function(name){
     return !!this.queued && this.queued.indexOf(name) >= 0
 }
 Room.isQueued = function (name){
-    if(!Memory.spawnqueue){
-        return false
-    }
-    if(!Memory.spawnqueue.index){
+    if(!Memory.spawnqueue || !Memory.spawnqueue.index || !Memory.spawnqueue.index[this.name]){
         return false
     }
     const spawnrooms = Object.keys(Memory.spawnqueue.index)

@@ -131,7 +131,7 @@ var extension={
     },
 
     /**
-    * 设置boostlab，注意lab状态需要creep boost完成后修改，建议定期检查
+    * 设置boostlab，注意lab状态需要creep boost完成后修改
     * @returns {Number} 0:任务已完成
     */
     setBoostLab:function(){
