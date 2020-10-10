@@ -34,3 +34,54 @@ global.REACTION={
     "XGH2O":["GH2O","X"],
     "XGHO2":["GHO2","X"]
 }
+global.MINERALS_EXTRACTABLE=[
+  RESOURCE_HYDROGEN,
+  RESOURCE_OXYGEN,
+  RESOURCE_UTRIUM,
+  RESOURCE_LEMERGIUM,
+  RESOURCE_KEANIUM,
+  RESOURCE_ZYNTHIUM,
+  RESOURCE_CATALYST
+]
+global.RESOURCE_MINE=[
+  'H','O','U','L','K','Z','X'
+]
+global.RESOURCE_DEPOSIT=[
+  'silicon','metal','biomass','mist'
+]
+global.RESOURCE_MID=[
+  'OH','ZK','UL'
+]
+global.RESOURCE_BAR=[
+  'utrium_bar','lemergium_bar','zynthium_bar','keanium_bar','ghodium_melt','oxidant','reductant','purifier','battery'
+]
+global.RESOURCE_COMMODITY=[
+  'wire','switch','transistor','microchip','circuit','device',
+  'cell','phlegm','tissue','muscle','organoid','organism',
+  'alloy','tube','fixtures','frame','hydraulics','machine',
+  'condensate','concentrate','extract','spirit','emanation','essence'
+]
+global.silicon0='wire'
+global.silicon1='switch'
+global.silicon2='transistor'
+global.silicon3='microchip'
+global.silicon4='circuit'
+global.silicon5='device'
+global.metal0='alloy'
+global.metal1='tube'
+global.metal2='fixtures'
+global.metal3='frame'
+global.metal4='hydraulics'
+global.metal5='machine'
+global.bio0='cell'
+global.bio1='phlegm'
+global.bio2='tissue'
+global.bio3='muscle'
+global.bio4='organoid'
+global.bio5='organism'
+global.mist0='condensate'
+global.mist1='concentrate'
+global.mist2='extract'
+global.mist3='spirit'
+global.mist4='emanation'
+global.mist5='essence'
