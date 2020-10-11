@@ -36,7 +36,7 @@ var extension={
         labs.sort(function (a, b) {
             return labDistances[a.id] - labDistances[b.id]
         })
-        this.memory.feederLabs=setGameID([labs[0],labs[1]])
+        this.memory.feederLabs=[labs[0].id,labs[1].id]
         if(!labs[0].memory || !labs[0].memory.state){
             labs[0].memory={state:1}
         }
@@ -50,7 +50,6 @@ var extension={
     * 获取产物lab
     * @returns {ObjectArray}
     * @returns {Number} -7:目标错误, -2:lab不足,
-    * 建议定时清除重新检查
     */
     getVatLabs:function(){
         var feederLabs=this.getFeederLabs()
@@ -75,7 +74,7 @@ var extension={
             filter: s => s.strutureType === STRUCTURE_LAB &&
                     (!s.memory || s.memory.state === 2)
         })
-        this.memory.vatLabs=setGameID(vatlabs)
+        this.memory.vatLabs=vatlabs.id
         return getGameObject(vatlabs)
     },
 
