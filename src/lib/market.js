@@ -113,6 +113,4 @@ var extension={
             }
         }
     },
-
-    
 }
