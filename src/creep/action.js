@@ -9,7 +9,7 @@ var extension={
     * @param id {String || Array}
     * @returns {Number} 0:OK, -5:没找到目标, -6:目标能量不足
     */
-    getEnergy: function(useTerminal,useStorage,useDropped,id){
+    getEnergy:function(useTerminal,useStorage,useDropped,id){
         // 无参数时默认模式
         if(arguments.length === 0){
             var source = this.pos.findClosestByRange(FIND_STRUCTURES,{
@@ -105,7 +105,7 @@ var extension={
      * 回收creep
      * @returns {Number} 0:OK, -5:没找到spawn
      */
-    recycle: function(){
+    recycle:function(){
         let storage=this.room.storage
         if(!storage && this.room.terminal){
             storage=this.room.terminal
@@ -146,7 +146,7 @@ var extension={
      * @param target {Object}
      * @returns {Number} 0:OK, -6:携带资源不足, -9:距离太远
      */
-    transferAll: function(){
+    transferAll:function(){
         if(this.store.getUsedCapacity() <= 0){
             return ERR_NOT_ENOUGH_RESOURCES
         }
@@ -156,6 +156,32 @@ var extension={
         for(let resource of Object.keys(this.store)){
             if(this.store[resource]>0){
                 return this.transfer(target,resource)
+            }
+        }
+    },
+
+    goWithdraw:function(target, resourceType, amount){
+        if(amount){
+            if(this.withdraw(target, resourceType, amount) === ERR_NOT_IN_RANGE){
+                this.moveTo(target)
+            }
+        }
+        else{
+            if(this.withdraw(target, resourceType, amount) === ERR_NOT_IN_RANGE){
+                this.moveTo(target)
+            }
+        }
+    },
+
+    goTransfer:function(target, resourceType, amount){
+        if(amount){
+            if(this.transfer(target, resourceType, amount) === ERR_NOT_IN_RANGE){
+                this.moveTo(target)
+            }
+        }
+        else{
+            if(this.transfer(target, resourceType, amount) === ERR_NOT_IN_RANGE){
+                this.moveTo(target)
             }
         }
     }
