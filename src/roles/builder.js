@@ -43,7 +43,7 @@ class Builder extends MetaRole{
         }
 
         if(!creep.memory.target || Game.time%10 === 0){
-            var target=creep.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES, {range:3})
+            var target=creep.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES)
             if(target){
                 creep.memory.target=target.id
             }
@@ -57,11 +57,32 @@ class Builder extends MetaRole{
                     target.sort((a,b) => a.hits - b.hits)
                     creep.memory.target=target[0].id
                 }
+                else{
+                    // 闲的时候刷墙交给其他地方来判断
+                    target=creep.room.memory.target
+                }
+            }
+            if(creep.memory.target){
+                var target=Game.getObjectByID(creep.memory.target)
+                if(creep.pos.getRangeTo(target) > 3){
+                    creep.moveTo(target)
+                }
+                else{
+                    if(target.hits){
+                        creep.repair(target)
+                    }
+                    else{
+                        creep.build(target)
+                    }
+                }
             }
         }
     }
 
     antiNuker(creep){
-
+        var nukes=creep.room.find(FIND_NUKES)
+        for(let nuker of nukes){
+            
+        }
     }
 }
