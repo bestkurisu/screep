@@ -80,9 +80,45 @@ class Builder extends MetaRole{
     }
 
     antiNuker(creep){
-        var nukes=creep.room.find(FIND_NUKES)
-        for(let nuker of nukes){
-            
+        
+    }
+
+    support(creep){
+        if(creep.store['energy'] <= 0){
+            creep.memory.recharge=true
+        }
+        if(creep.store['energy'] > creep.store.getCapacity() * 0.8){
+            delete creep.memory.recharge
+        }
+        if(creep.memory.recharge){
+            if(creep.room.controller.my){
+                return creep.getEnergy()
+            }
+            else{
+                var source=creep.room.find(FIND_STRUCTURES, {
+                    filter: s => s.store && s.store['energy'] >= 100 &&
+                        s.structureType !== STRUCTURE_NUKER
+                })
+                for(s of source){
+                    
+                }
+                if(creep.room.name !== creep.memory.chargeRoom)(
+                    creep.moveTo(new RoomPosition(25,25,creep.memory.chargeRoom))
+                )
+                else{
+                    creep.moveInRoom()
+                    source=creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE)
+                    if(source){
+                        if(creep.harvest(target) === ERR_NOT_IN_RANGE) {
+                            creep.moveTo(target)
+                        }
+                        return
+                    }
+                }
+            }
+        }
+        if(creep.room.name !== creep.memory.targetRoom){
+            creep.moveTo(new RoomPosition(25,25,creep.memory.targetRoom))
         }
     }
 }
