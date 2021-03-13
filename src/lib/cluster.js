@@ -2,11 +2,11 @@
 
 class Cluster{
     static clean(){
-        var clusters=Cluster.listAll()
-        for(var clusterName of clusters){
-            var cluster=new Cluster(clusterName)
+        let clusters = Cluster.listAll();
+        for(let clusterName of clusters){
+            let cluster = new Cluster(clusterName);
             if(cluster.getClusterSize() <= 0){
-                delete Memory.clusters[clusterName]
+                delete Memory.clusters[clusterName];
             }
         }
     }

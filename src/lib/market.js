@@ -113,4 +113,6 @@ var extension={
             }
         }
     },
+    
+    getCurrentPrice
 }
